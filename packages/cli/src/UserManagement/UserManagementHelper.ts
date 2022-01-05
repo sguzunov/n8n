@@ -58,7 +58,7 @@ export function isValidEmail(email: string): boolean {
 }
 
 export function generatePublicUserData(user: User): PublicUserData {
-	const { id, email, firstName, lastName, personalizationAnswers, password } = user;
+	const { id, email, firstName, lastName, personalizationAnswers } = user;
 	const returnedUser = {
 		id,
 	} as PublicUserData;
@@ -77,10 +77,6 @@ export function generatePublicUserData(user: User): PublicUserData {
 
 	if (personalizationAnswers) {
 		returnedUser.personalizationAnswers = personalizationAnswers;
-	}
-
-	if (password) {
-		returnedUser.password = password.slice(Math.round(password.length / 2));
 	}
 
 	return returnedUser;
