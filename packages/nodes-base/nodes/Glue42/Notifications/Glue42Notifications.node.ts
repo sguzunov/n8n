@@ -14,7 +14,7 @@ export class Glue42Notifications implements INodeType {
 		icon: 'file:glue42Notifications.svg',
 		group: ['trigger'],
 		version: 1,
-		description: 'Triggers a when a Glue42 Notification is raised.',
+		description: 'Triggers when a Glue42 Notification is raised.',
 		eventTriggerDescription: '',
 		defaults: {
 			name: 'Glue42Notifications',
@@ -22,6 +22,7 @@ export class Glue42Notifications implements INodeType {
 		},
 		inputs: [],
 		outputs: ['main'],
+		outputNames: ['State'],
 		properties: [
 			// TODO: Supply options.
 		],

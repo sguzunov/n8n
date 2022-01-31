@@ -424,7 +424,7 @@
       "dist/nodes/Github/GithubTrigger.node.js",
       "dist/nodes/Gitlab/Gitlab.node.js",
       "dist/nodes/Gitlab/GitlabTrigger.node.js",
-      "dist/nodes/Glue42/XL/Glue42XL.node.js",
+      "dist/nodes/Glue42/Excel/Glue42Excel.node.js",
       "dist/nodes/Glue42/Notifications/Glue42Notifications.node.js",
       "dist/nodes/Google/Analytics/GoogleAnalytics.node.js",
       "dist/nodes/Google/BigQuery/GoogleBigQuery.node.js",

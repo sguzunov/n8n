@@ -6,20 +6,19 @@ import {
 } from 'n8n-workflow';
 
 import GlueFactory from '@glue42/core';
-import { updateExcelSheet } from './Glue42XL';
-// import { updateExcelSheet } from './Glue42XL';
+import { updateExcelSheet } from './Glue42Excel';
 
-export class Glue42XL implements INodeType {
+export class Glue42Excel implements INodeType {
 	public readonly description: INodeTypeDescription = {
-		displayName: 'Glue42 XL',
-		name: 'Glue42XL',
-		icon: 'file:glue42XL.svg',
+		displayName: 'Glue42 Excel',
+		name: 'Glue42Excel',
+		icon: 'file:glue42Excel.svg',
 		group: ['input', 'output'],
 		version: 1,
 		description: 'Read, update and write data to Microsoft Excel via Glue42.',
 		eventTriggerDescription: '',
 		defaults: {
-			name: 'Glue42XL',
+			name: 'Glue42Excel',
 			color: '#00FF00',
 		},
 		inputs: ['main'],
@@ -32,7 +31,7 @@ export class Glue42XL implements INodeType {
 
 	async execute(this: IExecuteFunctions): Promise<null> {
 
-		console.log('+++ Glue42XL....', );
+		console.log('+++ Glue42 Excel....', );
 
 		const glue = await GlueFactory({
 			application: 'n8n-XL-node',
@@ -45,13 +44,13 @@ export class Glue42XL implements INodeType {
 				password: ''
 			}
 		});
-		console.log('+++ Glue42XL done', glue.version);
+		console.log('+++ Glue42Excel done', glue.version);
 
 		const inputData = this.getInputData();
 
 		glue.interop.invoke('n8n-test', {
 			time: Date.now(),
-			source: 'Glue42XL',
+			source: 'Glue42Excel',
 			inputData
 		}).catch(console.error);
 
