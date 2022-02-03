@@ -2,46 +2,36 @@ import { ITriggerFunctions } from 'n8n-core';
 import {
 	INodeType,
 	INodeTypeDescription,
-	ITriggerResponse,
+	ITriggerResponse
 } from 'n8n-workflow';
 
-import GlueFactory from '@glue42/core';
+import { initializeGlue } from '../GlueUtils';
 
 export class Glue42Notifications implements INodeType {
+
 	public readonly description: INodeTypeDescription = {
 		displayName: 'Glue42 Notifications',
 		name: 'Glue42Notifications',
 		icon: 'file:glue42Notifications.svg',
 		group: ['trigger'],
 		version: 1,
-		description: 'Triggers when a Glue42 Notification is raised.',
+		description: 'Triggers the flow when a Glue42 Notification is raised.',
 		eventTriggerDescription: '',
 		defaults: {
-			name: 'Glue42Notifications',
+			name: 'Glue42 Notifications',
 			color: '#00FF00',
 		},
 		inputs: [],
 		outputs: ['main'],
-		outputNames: ['State'],
-		properties: [
-			// TODO: Supply options.
-		],
+		outputNames: ['Notification'],
+		properties: [],
 	};
 
 
 	async trigger(this: ITriggerFunctions): Promise<ITriggerResponse> {
 
-		const glue = await GlueFactory({
-			application: 'n8n-notifications-trigger-node',
-			gateway: {
-				ws: 'ws://localhost:8385/',
-				protocolVersion: 3
-			},
-			auth: {
-				username: 'suzunov',
-				password: ''
-			}
-		});
+		const glue = await initializeGlue();
+		console.log(`Glue42 SDK initialized ,version ${glue.version}`);
 
 		// The trigger function to execute when a notification got raised.
 		const executeTrigger = (items: any[]) => {

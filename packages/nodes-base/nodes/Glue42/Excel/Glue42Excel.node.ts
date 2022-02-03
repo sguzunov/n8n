@@ -5,8 +5,8 @@ import {
 	// LoggerProxy as Logger
 } from 'n8n-workflow';
 
-import GlueFactory from '@glue42/core';
 import { appendToWorksheet, startExcel } from './Glue42Excel';
+import { initializeGlue } from '../GlueUtils';
 
 export class Glue42Excel implements INodeType {
 	public readonly description: INodeTypeDescription = {
@@ -184,22 +184,12 @@ export class Glue42Excel implements INodeType {
 		],
 	};
 
-
-	async execute(this: IExecuteFunctions): Promise<any> {
+	public async execute(this: IExecuteFunctions): Promise<any> {
 
 		console.log('[Glue42Excel] executing...');
 
-		const glue = await GlueFactory({
-			application: 'n8n-excel-node',
-			gateway: {
-				ws: 'ws://localhost:8385/',
-				protocolVersion: 3
-			},
-			auth: {
-				username: 'suzunov',
-				password: ''
-			}
-		});
+		const glue = await initializeGlue();
+
 		console.log('[Glue42Excel] glue initialized ', glue.version);
 
 		const resource = this.getNodeParameter('resource', 0) as string;
