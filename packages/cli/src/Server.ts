@@ -150,7 +150,7 @@ import { InternalHooksManager } from './InternalHooksManager';
 import { TagEntity } from './databases/entities/TagEntity';
 import { WorkflowEntity } from './databases/entities/WorkflowEntity';
 import { NameRequest } from './WorkflowHelpers';
-import { getNodeTranslationPath } from './TranslationHelpers';
+import { getCredentialTranslationPath, getNodeTranslationPath } from './TranslationHelpers';
 
 require('body-parser-xml')(bodyParser);
 
@@ -615,6 +615,8 @@ class App {
 
 		// Does very basic health check
 		this.app.get('/healthz', async (req: express.Request, res: express.Response) => {
+			LoggerProxy.debug('Health check started!');
+
 			const connection = getConnectionManager().get();
 
 			try {
@@ -634,6 +636,8 @@ class App {
 			const responseData = {
 				status: 'ok',
 			};
+
+			LoggerProxy.debug('Health check completed successfully!');
 
 			ResponseHelper.sendSuccessResponse(res, responseData, true, 200);
 		});
@@ -891,7 +895,7 @@ class App {
 					}
 
 					await this.externalHooks.run('workflow.afterUpdate', [workflow]);
-					void InternalHooksManager.getInstance().onWorkflowSaved(workflow as IWorkflowBase);
+					void InternalHooksManager.getInstance().onWorkflowSaved(workflow);
 
 					if (workflow.active) {
 						// When the workflow is supposed to be active add it again
@@ -1178,6 +1182,27 @@ class App {
 			),
 		);
 
+		this.app.get(
+			`/${this.restEndpoint}/credential-translation`,
+			ResponseHelper.send(
+				async (
+					req: express.Request & { query: { credentialType: string } },
+					res: express.Response,
+				): Promise<object | null> => {
+					const translationPath = getCredentialTranslationPath({
+						locale: this.frontendSettings.defaultLocale,
+						credentialType: req.query.credentialType,
+					});
+
+					try {
+						return require(translationPath);
+					} catch (error) {
+						return null;
+					}
+				},
+			),
+		);
+
 		// Returns node information based on node names and versions
 		this.app.post(
 			`/${this.restEndpoint}/node-types`,
@@ -1201,13 +1226,17 @@ class App {
 						nodeTypes: INodeTypeDescription[],
 					) {
 						const { description, sourcePath } = NodeTypes().getWithSourcePath(name, version);
-						const translationPath = await getNodeTranslationPath(sourcePath, defaultLocale);
+						const translationPath = await getNodeTranslationPath({
+							nodeSourcePath: sourcePath,
+							longNodeType: description.name,
+							locale: defaultLocale,
+						});
 
 						try {
 							const translation = await readFile(translationPath, 'utf8');
 							description.translation = JSON.parse(translation);
 						} catch (error) {
-							// ignore - no translation at expected translation path
+							// ignore - no translation exists at path
 						}
 
 						nodeTypes.push(description);
