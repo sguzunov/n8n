@@ -6,7 +6,7 @@ import {
 } from 'n8n-workflow';
 
 import GlueFactory from '@glue42/core';
-import { updateExcelSheet } from './Glue42Excel';
+import { appendToWorksheet, startExcel } from './Glue42Excel';
 
 export class Glue42Excel implements INodeType {
 	public readonly description: INodeTypeDescription = {
@@ -24,17 +24,173 @@ export class Glue42Excel implements INodeType {
 		inputs: ['main'],
 		outputs: ['main'],
 		properties: [
-			// TODO: Supply options.
+			{
+				displayName: 'Resource',
+				name: 'resource',
+				type: 'options',
+				options: [
+					{
+						name: 'Workbook',
+						value: 'workbook',
+					},
+					{
+						name: 'Worksheet',
+						value: 'worksheet',
+					},
+
+				],
+				default: 'worksheet'
+			},
+
+			// --------------
+			// Operations for a workbook.
+			// --------------
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				displayOptions: {
+					show: {
+						resource: [
+							'workbook',
+						],
+					},
+				},
+				options: [
+					{
+						name: 'Create',
+						value: 'create',
+						description: 'Create a workbook.',
+					},
+				],
+				default: 'create',
+				description: 'The operation to perform.',
+			},
+
+			// --------------
+			// Operations for a worksheet.
+			// --------------
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				displayOptions: {
+					show: {
+						resource: [
+							'worksheet',
+						],
+					},
+				},
+				options: [
+					{
+						name: 'Append',
+						value: 'append',
+						description: 'Append data to a sheet. If the sheet does not exists, it is automatically created.',
+					},
+					{
+						name: 'Create',
+						value: 'create',
+						description: 'Create a new sheet',
+					},
+					{
+						name: 'Delete',
+						value: 'delete',
+						description: 'Delete columns and rows from a sheet',
+					},
+					{
+						name: 'Lookup',
+						value: 'lookup',
+						description: 'Look up a specific column value and return the matching row',
+					},
+					{
+						name: 'Read',
+						value: 'read',
+						description: 'Read data from a sheet',
+					},
+					{
+						name: 'Remove',
+						value: 'remove',
+						description: 'Remove a sheet',
+					},
+					{
+						name: 'Update',
+						value: 'update',
+						description: 'Update rows in a sheet',
+					},
+				],
+				default: 'append',
+				description: 'The operation to perform.',
+			},
+
+			// --------------
+			// All
+			// --------------
+			{
+				displayName: 'File Location',
+				name: 'fileLocation',
+				type: 'string',
+				default: 'C:\\Workspace\\PoC\\n8n\\files',
+				required: true
+			},
+			{
+				displayName: 'Workbook Name',
+				name: 'workbookName',
+				type: 'string',
+				default: 'Social Media.xlsx',
+				required: true
+			},
+			{
+				displayName: 'Worksheet Name',
+				name: 'worksheetName',
+				type: 'string',
+				default: 'Musk about TSLA',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: [
+							'worksheet',
+						],
+					},
+				},
+			},
+			{
+				displayName: 'Table Name',
+				name: 'tableName',
+				type: 'string',
+				default: 'Tweets',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: [
+							'worksheet',
+						],
+					},
+				},
+			},
+			{
+				displayName: 'Table Columns',
+				name: 'tableColumns',
+				type: 'string',
+				default: 'Date; Tweet',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: [
+							'worksheet',
+						],
+					},
+				},
+			}
 		],
 	};
 
 
-	async execute(this: IExecuteFunctions): Promise<null> {
+	async execute(this: IExecuteFunctions): Promise<any> {
 
-		console.log('+++ Glue42 Excel....', );
+		console.log('[Glue42Excel] executing...');
 
 		const glue = await GlueFactory({
-			application: 'n8n-XL-node',
+			application: 'n8n-excel-node',
 			gateway: {
 				ws: 'ws://localhost:8385/',
 				protocolVersion: 3
@@ -44,21 +200,45 @@ export class Glue42Excel implements INodeType {
 				password: ''
 			}
 		});
-		console.log('+++ Glue42Excel done', glue.version);
+		console.log('[Glue42Excel] glue initialized ', glue.version);
 
-		const inputData = this.getInputData();
+		const resource = this.getNodeParameter('resource', 0) as string;
+		const operation = this.getNodeParameter('operation', 0) as string;
 
-		glue.interop.invoke('n8n-test', {
-			time: Date.now(),
-			source: 'Glue42Excel',
-			inputData
-		}).catch(console.error);
+		if(resource === 'workbook') {
+			// Out of demo scope.
+			return null;
+		}
 
-		await updateExcelSheet(glue, {
-			data: inputData[0].json,
-			table: 'Notifications',
-			workbook: 'C:\\Users\\suzunov\\Desktop\\MacroTemplate.xlsm',
-			worksheet: 'Notifications'
+		// Selected resource is "worksheet".
+
+		if(operation !== 'append') {
+			// Out of demo scope. Only "append" is supported.
+			return null;
+		}
+
+		const excelStarted = await startExcel(glue).catch(console.error)
+		if(!excelStarted) {
+			console.error('Excel not started');
+			return null;
+		}
+
+		const fileLocation = this.getNodeParameter('fileLocation', 0) as string;
+		const workbookName = this.getNodeParameter('workbookName', 0) as string;
+		const worksheetName = this.getNodeParameter('worksheetName', 0) as string;
+		const tableName = this.getNodeParameter('tableName', 0) as string;
+		const tableColumns = this.getNodeParameter('tableColumns', 0) as string;
+
+		const data = this.getInputData()[0].json;
+		const columns = tableColumns.split(/;/).map((col) => col.trim())
+
+		await appendToWorksheet(glue, {
+			data,
+			columns,
+			table: tableName,
+			workbookName,
+			worksheetName,
+			fileLocation,
 		})
 		.catch(console.error);
 
